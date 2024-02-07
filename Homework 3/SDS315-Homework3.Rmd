@@ -1,0 +1,264 @@
+---
+title: "SDS 315 - Homework 3"
+author: "Amanda Roberts: acr4437"
+date: "January 25, 2024"
+output:
+  pdf_document: default
+---
+
+link to GitHub:
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(mosaic)
+library(kableExtra)
+```
+
+# Problem 1: Creatine Clearance Rate
+
+```{r include=FALSE}
+creatine = read.csv("creatinine.csv")
+```
+
+```{r include=FALSE}
+#Part A and B
+model_creatine = lm(creatclear ~ age, data=creatine)
+coef(model_creatine)
+
+df_partA = data.frame(
+  age = c(55)
+)
+predict(model_creatine, df_partA)
+
+#Part C
+df_partC = data.frame(
+  age = c(40, 60),
+  creatclear = c(135, 112)
+)
+
+df_partC = df_partC %>% 
+  mutate(predict = predict(model_creatine, df_partC)) %>% 
+  mutate(resid = creatclear - predict)
+
+
+df_partC
+```
+#### Part A:
+Making a linear regression model for the data provided gives us the following equation where y is the predicted creatinine clearance rate and x is age.
+
+y = 147.81 - 0.62x
+
+Using the 55 for x, we would expect a creatinine clearance rate of about 113.72 mL/minute, for a 55-year-old. 
+
+
+#### Part B:
+The slope of the line of best fit is about -0.62. Thus, creatinine clearance rate decreases with age at a rate of -0.62 ml/minute per year. 
+
+#### Part C:
+Given a 40-year-old with a rate of 135 and a 60-year-old with a rate of 112, the regression model above can determine whose creatinine clearance rate is healthier (higher) for their age. The difference between the actual rate the people have and their predicted rate, found from the regression model, is called the residual.
+
+Residual = Actual - Predicted
+
+The predicted rate for the 40-year-old is about 123.02 and 110.62 for the 60-year-old. The residuals for both ages are 11.98 and 1.38, respectively. For the 40-year-old, their actual rate is about 11.98 mL/minute higher for their age. Similarly, the 60-year-old's actual rate is only about 1.38 mL/minute higher for their age. Thus, the 40-year-old has a healthier creatinine clearance rate for their age.
+
+\newpage
+
+
+# Problem 2: Capital Asset Pricing Model
+
+```{r include=FALSE}
+stocks = read.csv("marketmodel.csv")
+```
+
+```{r echo=FALSE}
+#ticker, intercept, slope, r^2
+stocks_table = data.frame(
+  Ticker = character(),
+  Intercept = numeric(),
+  Slope = numeric(),
+  R_squared = numeric()
+)
+
+#AAPL
+model_AAPL = lm(SPY ~ AAPL, data=stocks)
+
+stocks_table[1, ] = c("AAPL", 
+                      round(coef(model_AAPL)[1], digits = 5), 
+                      round(coef(model_AAPL)[2], digits = 5),
+                      round(rsquared(model_AAPL), digits = 5)
+                      )
+
+#GOOG
+model_GOOG = lm(SPY ~ GOOG, data=stocks)
+
+stocks_table[2, ] = c("GOOG", 
+                      round(coef(model_GOOG)[1], digits = 5), 
+                      round(coef(model_GOOG)[2], digits = 5),
+                      round(rsquared(model_GOOG), digits = 5)
+                      )
+
+#MRK
+model_MRK = lm(SPY ~ MRK, data=stocks)
+
+stocks_table[3, ] = c("MRK", 
+                      round(coef(model_MRK)[1], digits = 5), 
+                      round(coef(model_MRK)[2], digits = 5),
+                      round(rsquared(model_MRK), digits = 5)
+                      )
+
+#JNJ
+model_JNJ = lm(SPY ~ JNJ, data=stocks)
+
+stocks_table[4, ] = c("JNJ", 
+                      round(coef(model_JNJ)[1], digits = 5), 
+                      round(coef(model_JNJ)[2], digits = 5),
+                      round(rsquared(model_JNJ), digits = 5)
+                      )
+
+#WMT
+model_WMT = lm(SPY ~ WMT, data=stocks)
+
+stocks_table[5, ] = c("WMT", 
+                      round(coef(model_WMT)[1], digits = 5), 
+                      round(coef(model_WMT)[2], digits = 5),
+                      round(rsquared(model_WMT), digits = 5)
+                      )
+
+#TGT
+model_TGT = lm(SPY ~ TGT, data=stocks)
+
+stocks_table[6, ] = c("TGT", 
+                      round(coef(model_TGT)[1], digits = 5), 
+                      round(coef(model_TGT)[2], digits = 5),
+                      round(rsquared(model_TGT), digits = 5)
+                      )
+
+```
+
+A basic form of the Capital Asset Pricing Model (CAPM), as seen below, portrays the linear relationship between the rate of return on the stock market (X) and the individual stock (Y) over a period of time.
+$$
+Y = \beta_0 + \beta_1X
+$$
+Finance professionals call $\beta_0$ (intercept) "alpha"and $\beta_1$ (slope) "beta". The beta of a stock is the measure of its systematic risk. Given a 1% change in the market portfolio, beta is the percentage change in a stock's return. A beta of 1 is the systematic risk of an average form. A beta less than 1 indicates a "safer" stock because the sways of the general market have a smaller effect on their return. However, a stock with a beta greater than 1 denotes a "riskier" stock. If the market goes up, that stock grows by a rate larger than the market. Similarly, if the market goes down, that stock's rate falls further than the market. A beta close or equal to 0 indicates a stock with no systematic risk and thus, not effected by the market. 
+
+```{=tex}
+\vspace{12pt}
+```
+\begin{center}
+CAPM Regression Data
+```{r echo=FALSE}
+kable(stocks_table, format = "latex", 
+      col.names = c("Ticker", "Intercept", "Slope", "R Squared"))
+```
+\end{center}
+```{=tex}
+\vspace{12pt}
+```
+
+For this regression, the S&P 500 stock index was used as the return on the market. The table above displays the $\beta_0$ (Intercept), $\beta_1$ (Slope), and coefficient of determination ($R^2$) for 6 stocks from January 2019 to September 2020. The stock with the highest systematic risk, $\beta_1$, is Johnson and Johnson with 0.74, and the lowest is Apple with 0.01.
+
+
+\newpage
+
+# Problem 3: Covid-19 Deaths in Italy and Spain
+
+```{r include=FALSE}
+covid = read.csv("covid.csv")
+```
+
+```{r, include=FALSE}
+#Spain
+spain = covid %>% 
+  filter(country == "Spain")
+
+lm_spain = lm(log(deaths) ~ days_since_first_death, data=spain)
+
+#growth rate
+coef(lm_spain)[2]
+
+#doubling time
+70/coef(lm_spain)[2]
+```
+
+```{r, include=FALSE}
+#Italy
+italy = covid %>% 
+  filter(country == "Italy")
+
+lm_italy = lm(log(deaths) ~ days_since_first_death, data=italy)
+
+#growth rate
+coef(lm_italy)[2]
+
+#doubling time
+70/coef(lm_italy)[2]
+```
+
+write about 
+-growth and doubling for italy and spain
+-caption for line graph
+
+COVID-19 deaths in Italy and Spain from February and March of 2020 fit an epxonential growth model. The time variable is the days since first death in the respective country. This data indicates that Italy's growth rate is about .183 or an 18.3% growth rate per day with a doubling time of about 382 days. Similarly, Spain's growth rate is about .276 or a 27.6% growth rate per day with a doubling time of about 253 days.
+
+```{=tex}
+\vspace{12pt}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, fig.height=3, fig.width=5}
+ggplot(covid) +
+  geom_line(aes(x=days_since_first_death, y=deaths, color=country)) +
+  theme_bw() +
+  labs(title="Covid Deaths by Days Since First Death by Country",
+       x="Days Since First Death",
+       y="Deaths", 
+       color="Country") +
+  scale_color_manual(values = c("Italy"="indianred", "Spain"="royalblue"))
+```
+
+The graph above depicts the COVID-19 deaths by days since first death for Italy and Spain. Spain's growth rate of about 27.6%, greater than Italy's 18.3%, is clear with its steaper curve.
+
+```{=tex}
+\vspace{12pt}
+\vspace{12pt}
+\vspace{12pt}
+\vspace{12pt}
+```
+
+# Problem 4: The Elasticity of Demand for Milk
+
+```{r include=FALSE}
+milk = read.csv("milk.csv")
+
+ggplot(milk) +
+  geom_point(aes(x=log(price), y=log(sales)))
+
+lm_milk = lm(log(sales) ~ log(price), data=milk)
+coef(lm_milk)[2]
+```
+
+An ordinary least squares regression after a natural log transformation of the power-law model can be used to estimate the elasticity of demand for milk.
+
+Q = Quantity demanded; P = Price; $\beta$ = Price elasticity of demand
+$$
+Q = KP^\beta
+$$
+$$
+log(Q) = log(K) + \beta * log(x)
+$$
+
+The equation is now a linear model with $\beta$ as the slope. After calculation, the estimated elasticity of demand for milk is about -1.62. 
+
+
+
+
+
+
+
+
+
