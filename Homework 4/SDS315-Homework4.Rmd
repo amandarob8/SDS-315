@@ -1,0 +1,494 @@
+---
+title: "SDS 315 - Homework 4"
+author: "Amanda Roberts: acr4437"
+date: "February 19, 2024"
+output:
+  pdf_document: default
+---
+
+link to GitHub: https://github.com/amandarob8/SDS-315/tree/main/Homework%204
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(mosaic)
+library(dplyr)
+```
+
+
+# Problem 1: Gas Prices
+```{r include=FALSE}
+gas = read.csv("gasprices.csv")
+```
+
+## Theory A: Competition
+
+Theory A claims that gas stations charge more if they lack direct competition in sight. Below are the distributions of gas prices with and without competition nearby. Both graphs have similar spreads with means of `$1.88` and `$1.85`, top to bottom. The difference between these two is about `$0.023`
+
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4.5, fig.height=2.5}
+#Gas stations charge more if they lack direct competition in sight
+
+#variable name
+gas$Competitors[gas$Competitors == "Y"] = "Yes"
+gas$Competitors[gas$Competitors == "N"] = "No"
+
+#plot
+ggplot(gas) +
+  geom_histogram(aes(x=Price), binwidth=.04, 
+                 fill="royalblue", col="black") +
+  facet_wrap(~Competitors, nrow=2) +
+  theme_bw() +
+  labs(title="Gas Prices With and Without Direct Competition",
+       x="Price per Gallon",
+       y="Frequency")
+```
+
+```{r include=FALSE}
+#means
+diffmean(Price ~ Competitors, data=gas)
+
+#bootstrap
+competitor_price = do(10000)*diffmean(Price ~ Competitors,
+                                      data=mosaic::resample(gas))
+
+confint(competitor_price, level = .95)
+#95% interval: (-.06, .01)
+```
+
+The difference in price between gas stations with and without direct competition in sight is somewhere between `-$0.06` and `$0.01`, with 95% confidence. A positive number in this interval indicates a higher price for a station with competition. This interval includes the value `$0.00`, meaning a price difference of zero between the two exists in the interval. Because of this, we are unsure which which way the difference leans, if any at all. The ends of the interval are only a few cents, so the potential variation in the difference in prices is not too large. Thus, the evidence does not support the claim.
+
+
+\newpage
+
+## Theory B: Wealthy Areas
+Theory B claims that gas stations charge more if they are in richer areas. A 'rich area' was determined by the median income level of the gas station's zip code. Below are the distributions of gas prices with and without competition nearby. For every `$1` increase in income, the gas price increases about `$0.000001248`, according to a least squares regression model. Thinking about income differently dollar by dollar doesn't tell us much, so let's increase the scale. For every `$10,000` increase in income, the gas price increases by about `$0.012` or one cent.
+
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4, fig.height=2.5}
+#The richer the area, the higher the gas prices.
+
+#plot
+ggplot(gas) +
+  geom_point(aes(x=Income, y=Price), col="orchid3") +
+  theme_bw() +
+  labs(title="Income vs Gas Prices",
+       x="Median Income",
+       y="Price per Gallon")
+```
+
+```{r include=FALSE}
+#linear model
+lm(Price ~ Income, data=gas)
+
+#bootstrap
+income_price = do(10000)*lm(Price ~ Income,
+                            data=mosaic::resample(gas))
+
+confint(income_price, level = .95)
+
+#interval: .00000067 - .0000018
+#using 10,000 scale: 0.007, 0.018
+```
+With 95% confidence, for every `$1` increase in income, the gas price increases somewhere between `$0.00000067` and `$0.0000018`. For every `$10,000` increase in income, the gas prices increases somewhere between `$0.007` and `$0.018`. Thus, the increase is only about one to two cents. The magnitude of significance of this effect will vary from person to person as some care about the mere extra cents spent per gallon. Moreover, for an extreme increase of, let's say, `$100,000` difference in income, the impact of about 10-20 cents per gallon may have an increased meaning for some. However, in a largely practical sense, the evidence does not support this theory. 
+
+
+
+\newpage
+
+## Theory C: Stoplights
+
+Theory C claims that gas stations charge more if they are located at stoplights. Below is the distribution between the two. This data suggests that stations at stoplights charge an average of `$0.003` less.
+
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4, fig.height=2.5}
+#Gas stations at stoplights charge more.
+
+#variable name
+gas$Stoplight[gas$Stoplight == "Y"] = "Yes"
+gas$Stoplight[gas$Stoplight == "N"] = "No"
+
+#plot
+ggplot(gas) +
+  geom_boxplot(aes(x=Stoplight, y=Price), fill="lightskyblue1") +
+  theme_bw() +
+  labs(title="Gas Prices At and Not At Stoplights",
+       x="Stoplight?",
+       y="Price per Gallon")
+```
+
+```{r include=FALSE}
+#means
+mean(Price ~ Stoplight, data=gas)
+diffmean(Price ~ Stoplight, data=gas)
+
+#bootstrap
+stoplight_price = do(10000)*diffmean(Price ~ Stoplight,
+                                     data=mosaic::resample(gas))
+
+confint(stoplight_price, level = .95)
+
+#95: (-0.0382, 0.0306)
+```
+The difference in price between gas stations at and not at stoplights is somewhere between `-$0.0382` and `$0.0306`, with 95% confidence. This interval includes the value `$0.00`, meaning a price difference of zero between the two exists in the interval. Because of this, we are unsure which which way the difference leans, if any at all. Moreover, the ends of the interval are only a few cents, so the potential variation in the difference in prices is small and therefore not meaningful. Thus, evidence does not support this theory.
+
+\newpage
+## Theory D: Highway Access
+
+Theory D claims that gas stations with direct highway access charge more. Below is the distribution of gas prices for stations with and without highway access. The mean difference between the two is about `$0.046`, with highway access on the higher side.
+
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4.5, fig.height=2.5}
+#Gas stations with direct highway access charge more.
+
+#variable name
+gas$Highway[gas$Highway == "Y"] = "Yes"
+gas$Highway[gas$Highway == "N"] = "No"
+
+#plot
+ggplot(gas) +
+  geom_boxplot(aes(x=Highway, y=Price), fill="palegreen3") +
+  theme_bw() +
+  labs(title="Gas Prices for Stations With and Without Highway Access",
+       x="Direct Highway Access?",
+       y="Price per Gallon")
+```
+
+```{r include=FALSE}
+#means
+mean(Price ~ Highway, data=gas)
+diffmean(Price ~ Highway, data=gas)
+
+#bootstrap
+highway_price = do(10000)*diffmean(Price ~ Highway,
+                                   data=mosaic::resample(gas))
+
+confint(highway_price, level = .95)
+
+#95: (-.009, .082)
+```
+The difference in price between gas stations with and without highway access is somewhere between `-$0.009` and `$0.082`, with 95% confidence. The interval leans more towards a higher price for stations with highway access, but only by a few cents. However, 0 is still in the interval, indicating an unclear direction the theory sides with. Since the direction is not clear and the magnitude of the interval is not significant, the evidence does not support the theory.
+
+\newpage
+## Theory E: Shell
+
+Theory E claims that Shell stations charge more than all other non-Shell brands. Below is the distribution of gas prices between Shell and other brands. The mean difference is about `$0.027`, with Shell stations being the few cents more expensive, on average.
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4.5, fig.height=2.5}
+#Shell charges more than all other non-Shell brands.
+
+#new variable
+gas = gas %>% 
+  mutate(ShellorNot = ifelse(Name == "Shell", yes="Shell", no="Non-Shell"))
+
+#plot
+ggplot(gas) +
+  geom_boxplot(aes(x=ShellorNot, y=Price), fill="lightgoldenrod") +
+  theme_bw() +
+  labs(title="Gas Prices At Shell and Non-Shell Stations",
+       x="Shell?",
+       y="Price per Gallon")
+```
+
+```{r include=FALSE}
+#means
+mean(Price ~ ShellorNot, data=gas)
+diffmean(Price ~ ShellorNot, data=gas)
+
+#bootstrap
+shell_price = do(10000)*diffmean(Price ~ ShellorNot,
+                                 data=mosaic::resample(gas))
+
+confint(shell_price, level = .95)
+#95: (-.010, .065)
+```
+The difference in price between Shell and non-Shell gas stations  is somewhere between `-$0.010` and `$0.065`, with 95% confidence. A positive number in this interval indicates a higher price for a Shell station. This interval includes the value `$0.00`, meaning a price difference of zero between the two exists in the interval. Because of this, we are unsure which way the difference leans, if any at all. The ends of the interval are only a few cents, so the potential variation in the difference in prices is not too large. Thus, the evidence does not support the claim.
+
+
+\newpage
+
+# Problem 2: Cars
+```{r include=FALSE}
+cars = read.csv("sclass.csv")
+```
+
+## Part A
+
+Part A filters the data to only include 2011 S-Class 63 AMGs. The average mileage for this type of car that was hitting the used-car market at the time of data collection is about 28,997 miles per hour.
+
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4.5, fig.height=2.5}
+#filter
+partA_cars = cars %>% 
+  filter(year == 2011, trim == "63 AMG")
+
+#plot
+ggplot(partA_cars) +
+  geom_histogram(aes(x=mileage), binwidth=4000,
+                 fill="lightsteelblue", col="black") +
+  theme_bw() +
+  labs(title="Average Mileage of 2011 S-Class 63 AMGs",
+       x="Mileage",
+       y="Frequency")
+```
+
+```{r include=FALSE}
+#mean
+mean(partA_cars$mileage)
+
+#bootstrap
+avgmile_boot = do(10000)*mean(~mileage,
+                              data=mosaic::resample(partA_cars))
+
+confint(avgmile_boot, level = .95)
+
+#95: 26254.52, 31787.05
+```
+With 95% confidence, the average mileage for a 2011 S-Class 63 AMGs with this data is somewhere between 26,255 and 31,788 miles per hour.
+
+```{=tex}
+\vspace{12pt}
+\vspace{12pt}
+```
+
+## Part B
+
+Part B filters the data to only include 2014 S-Class 550s. The proportion of cars of this type that are black is about 43.5%.
+
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4.5, fig.height=2.5}
+#filter
+partB_cars = cars %>% 
+  filter(year == 2014, trim == "550")
+
+#new variable
+partB_cars = partB_cars %>% 
+  mutate(isBlack = ifelse(color == "Black", yes="Black", no="not Black"))
+
+#plot
+ggplot(partB_cars) +
+  geom_bar(aes(x=isBlack), fill="pink1", col="black") +
+  theme_bw() +
+  labs(title="Black 2014 S-Class 550s",
+       x="Black?",
+       y="Frequency")
+```
+
+```{r include = FALSE}
+#prop
+prop(~isBlack, data = partB_cars)
+
+#bootstrap
+black_car_boot = do(10000)*prop(~isBlack,
+                                data=mosaic::resample(partB_cars))
+
+confint(black_car_boot, level = .95)
+#95: .416, .453
+```
+With 95% confidence, the proportion of black 2014 S-Class 63 550s with this data is somewhere between 41.6% and 45.3% miles per hour.
+
+\newpage
+# Problem 3: TV Show Pilots
+```{r include=FALSE}
+tv = read.csv("nbc_pilotsurvey.csv")
+```
+
+## Part A
+
+Question: Part A considers which pilot episode from 'Living with Ed' or 'My Name is Earl' makes viewers happier, on a scale from 1 to 5.
+
+Approach: To answer this question, I used the ggplot bar plot to plot the data as well as the diffmean function to find the difference in the mean ratings. To deal with uncertainty, I used the bootstrap to calculate 10,000 diffmeans of samples from the data to create a 95% confidence interval.
+
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4, fig.height=3}
+#filter
+partA_tv = tv %>% 
+  filter(Show == "Living with Ed" | Show == "My Name is Earl")
+
+#plot
+ggplot(partA_tv) +
+  geom_bar(aes(x=Q1_Happy), fill="springgreen3", col="black") +
+  facet_wrap(~Show, nrow=2) +
+  theme_bw() +
+  labs(title="Happiness Rating For Each Pilot Episode",
+       x="Happiness Rating",
+       y="Frequency")
+```
+
+```{r include=FALSE}
+#means
+mean(Q1_Happy ~ Show, data=partA_tv)
+diffmean(Q1_Happy ~ Show, data=partA_tv)
+
+#bootstrap
+happy_tv = do(10000)*diffmean(Q1_Happy ~ Show,
+                              data=mosaic::resample(partA_tv))
+
+confint(happy_tv, level = .95)
+#95%: -0.394, 0.103
+```
+Results: Above is the distribution of scores for both pilots. 'Living with Ed' scored an average of 3.93 and 'My Name is Earl' scored an average of 3.78, making an average difference of 0.15. A 95% confidence interval puts the average difference somewhere between -0.39 and 0.10.
+
+Conclusion: The interval includes 0, meaning no difference in ratings, with a pretty significant range on either side of 0. The interval suggests that the difference could put either show above the other in happiness ratings, meaning it is difficult to draw a conclusion as to which show comes out on top. Thus, there is no evidence that either 'Living with Ed' or 'My Name is Earl' consistency produce a higher average happiness rating.
+
+\newpage
+## Part B
+
+Question: Part B considers which pilot episode from reality TV shows 'The Biggest Loser' or 'The Apprentice: Los Angeles' makes viewers more annoyed, on a scale from 1 to 5.
+
+Approach: To answer this question, I used the ggplot bar plot to plot the data as well as the diffmean function to find the difference in the mean ratings. To deal with uncertainty, I used the bootstrap to calculate 10,000 diffmeans of samples from the data to create a 95% confidence interval.
+
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4, fig.height=3}
+#filter
+partB_tv = tv %>% 
+  filter(Show == "The Biggest Loser" | Show == "The Apprentice: Los Angeles")
+
+#plot
+ggplot(partB_tv) +
+  geom_bar(aes(x=Q1_Annoyed), fill="indianred2", col="black") +
+  facet_wrap(~Show, nrow=2) +
+  theme_bw() +
+  labs(title="Annoyed Rating For Each Pilot Episode",
+       x="Annoyed Rating",
+       y="Frequency")
+```
+
+```{r include=FALSE}
+#means
+mean(Q1_Annoyed ~ Show, data=partB_tv)
+diffmean(Q1_Annoyed ~ Show, data=partB_tv)
+
+#bootstrap
+annoyed_tv = do(10000)*diffmean(Q1_Annoyed ~ Show,
+                                data=mosaic::resample(partB_tv))
+
+confint(annoyed_tv, level = .95)
+
+#95%: -.52, -.02
+```
+
+Results: Above is the distribution of scores for both pilots. 'The Biggest Loser' scored an average of 2.04 and 'The Apprentice: Los Angeles' scored an average of 2.32, making an average difference of -0.27. A 95% confidence interval puts the average difference somewhere between -0.52 and -.02, putting 'The Biggest Loser' slightly ahead.
+
+Conclusion: Although small, the confidence interval does suggest a difference in ratings. The evidence shows 'The Biggest Loser' producing a slightly higher annoyed response on average over 'The Apprentice: Los Angeles' for the pilot episodes.
+
+\newpage
+## Part C
+
+Question: Part C considers the pilot episode of 'Dancing with the Stars' and whether or not viewers were confused, on a scale of 1 to 5. Any response of 4 or 5, in this case, indicates a viewer was 'very confused'.
+
+Approach: To answer this question, I used the ggplot bar plot to plot the data as well as the prop function, from the mosaic library, to find the proportion of very and not very confused viewers. To deal with uncertainty, I used the bootstrap to calculate 10,000 proportions of samples from the data to create a 95% confidence interval.
+
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4, fig.height=3}
+#filter
+partC_tv = tv %>% 
+  filter(Show == "Dancing with the Stars") %>% 
+  mutate(VeryConfusedString = ifelse(Q2_Confusing >= 4, yes="Very Confused", no="Not Very Confused")) %>% 
+  mutate(VeryConfused = ifelse(Q2_Confusing >= 4, yes=TRUE, no=FALSE))
+
+#plot
+ggplot(partC_tv) +
+  geom_bar(aes(x=VeryConfusedString), fill="slateblue", col="black") +
+  theme_bw() +
+  labs(title="Very Confused Viewers Breakdown",
+       x="Very Confused?",
+       y="Frequency")
+```
+
+```{r include=FALSE}
+#prop
+prop(~VeryConfused, data = partC_tv)
+
+#bootstrap
+confused_tv = do(10000)*prop(~VeryConfused, 
+                             data=mosaic::resample(partC_tv))
+
+confint(confused_tv, level = .95)
+#95%: .039, .116
+```
+Results: Above is the split of very and not very confused viewers after watching the pilot episode of 'Dancing with the Stars'. The proportion of those who thought it was very confusing, a rating of 4 or 5, was about 0.08. A 95% confidence interval puts the average proportion somewhere between 0.04 and 0.12.
+
+Conclusion: The interval suggests very little extreme confusion after watching the pilot episode of 'Dancing with the Stars'.
+
+\newpage
+# Problem 4: Ebay
+```{r include=FALSE}
+ebay = read.csv("ebay.csv")
+```
+
+Question: Google offers paid advertising in the form of keyword searches by users, Google AdWords. Ebay, a company who could go without it and not be lost in search results, wants to know if the extra traffic brought in from Google's service justifies the costs of the ads themselves.
+
+Approach: Ebay ran an experiment in 2013 to try to answer this question. The control group continued using Google AdWords, while the treatment group paused the service for a month. I used the ggplot bar plot to plot the data as well as the diffmean function to find the difference in the mean revenue ratios from before and after the experiment. To deal with uncertainty, I used the bootstrap to calculate 10,000 diffmeans of samples from the data to create a 95% confidence interval.
+
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, message=FALSE, fig.width=4.5, fig.height=3}
+#filter
+ebay = ebay %>% 
+  mutate(adwords_pause_string = ifelse(adwords_pause == 1, yes="Paused - Treatment", no="Not Paused - Control"))
+
+#plot
+ggplot(ebay) +
+  geom_histogram(aes(x=rev_ratio), binwidth=.02,
+                 fill="cadetblue3", col="black") +
+  facet_wrap(~adwords_pause_string, nrow=2) +
+  theme_bw() +
+  labs(title="Revenue Ratio for Paused and Non-Paused DMAs",
+       x="Revenue Ratio",
+       y="Frequency")
+```
+
+```{r include=FALSE}
+#means
+mean(rev_ratio ~ adwords_pause_string, data=ebay)
+diffmean(rev_ratio ~ adwords_pause_string, data=ebay)
+
+#bootstrap
+ebay_boot = do(10000)*diffmean(rev_ratio ~ adwords_pause,
+                               data=mosaic::resample(ebay))
+
+confint(ebay_boot, level = .95)
+#95% interval: (0.091, 0.013)
+```
+Results: Above is the distribution of revenue ratios for the control and treatment groups. The control group has a mean ratio of about 0.949 and the treatment group has a mean ratio of about 0.897, resulting in a difference of about -0.052. A 95% confidence interval puts the average revenue ratio somewhere between -0.091 and 0.013. 
+
+Conclusion: A potential increase of about 5.2% with the ads is a significant jump indicating the use of Google AdWords is beneficial to Ebay.
+
+
