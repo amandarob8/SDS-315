@@ -1,0 +1,184 @@
+---
+title: "SDS 315 - Homework 4"
+author: "Amanda Roberts: acr4437"
+date: "February 28, 2024"
+output:
+  pdf_document: default
+---
+
+link to GitHub: https://github.com/amandarob8/SDS-315/tree/main/Homework%205
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(mosaic)
+library(dplyr)
+library(kableExtra)
+```
+
+
+# Problem 1: Iron Bank
+
+The null hypothesis in question is that, over the long run, securities trades from the Iron Bank are flagged at the same 2.4% baseline rate of other traders. The Securities and Exchange Commission(SEC) flagged 70 trades by Iron Bank employees, of the last 2021 trades.
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, fig.width=4, fig.height=3}
+#step 1: null = 2.4%
+#step 2: test statistic = 70/2021
+#step 3: 
+bank_sim = do(10000)*nflip(2021, prob=.024)
+
+ggplot(bank_sim) +
+  geom_histogram(aes(x=nflip), binwidth=3, fill="skyblue", col="black") +
+  theme_bw() +
+  labs(title="Probability Distribution of Flagged Trades",
+       x="Number of Flagged Trades",
+       y="Frequency")
+```
+
+```{r include=FALSE}
+#step 4:
+sum(bank_sim >= 70)/10000
+```
+
+The p-value for the test statistic of 70 out of 2021 trades is 0.0027. With this low of a p-value, the null hypothesis is rejected, meaning mere luck cannot account for the 70 out of 2021 trades flagged by the SEC.
+
+
+\newpage
+# Problem 2: Health Inspections
+
+The null hypothesis in question is that, on average, restaurants are cited health code violations at a citywide baseline rate of 3%. Over the last year, the local Health Department inspected 50 Gourmet Bites locations with 8 resulting in violations.
+```{=tex}
+\vspace{12pt}
+```
+
+```{r echo=FALSE, fig.width=4, fig.height=3}
+#step 1: null = 3%
+#step 2: test statistic = 8/50
+#step 3:
+health_sim = do(10000)*nflip(50, prob=.03)
+
+ggplot(health_sim) +
+  geom_histogram(aes(x=nflip), binwidth=1, fill="plum2", col="black") +
+  theme_bw() +
+  labs(title="Probability Distribution of Reported Health Code Violations",
+       x="Number of Reported Health Code Violations",
+       y="Frequency")
+```
+
+```{r include=FALSE}
+#step 4:
+sum(health_sim >= 8)/10000
+```
+
+The p-value for the test statistic of 8 out of 50 inspections is 0.0001. With this low of a p-value, the null hypothesis is rejected, meaning mere luck cannot account for the 8 out of 50 inspections resulting in health code violations.
+
+
+\newpage
+# Problem 3: LLM Watermarking
+
+
+```{r include=FALSE}
+#Part A
+
+#read in letter_frequencies.csv
+letter_frequencies = read.csv("letter_frequencies.csv")
+
+#read lines
+lines = readLines("brown_sentences.txt")
+
+#function definition
+calculate_chi_squared = function(sentence, freq_table) {
+  
+  # Ensure letter frequencies are normalized and sum to 1
+  freq_table$Probability = freq_table$Probability / sum(freq_table$Probability)
+  
+  # Remove non-letters and convert to uppercase
+  clean_sentence = gsub("[^A-Za-z]", "", sentence)
+  clean_sentence = toupper(clean_sentence)
+  
+  # Count the occurrences of each letter in the sentence
+  observed_counts = table(factor(strsplit(clean_sentence, "")[[1]], levels = freq_table$Letter))
+  
+  # Calculate expected counts
+  total_letters = sum(observed_counts)
+  expected_counts = total_letters * freq_table$Probability
+  
+  # Chi-squared statistic
+  chi_squared_stat = sum((observed_counts - expected_counts)^2 / expected_counts)
+  
+  return(chi_squared_stat)
+}
+
+#iterate through sentences
+chi_sq = c()
+for (i in 1:length(lines)) {
+  chi_sq[i] = calculate_chi_squared(lines[i], letter_frequencies)
+}
+```
+
+```{r include=FALSE}
+#Part B
+
+#10 sentences into R vector
+ten_sentences <- c(
+  "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+  "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+  "The museum’s new exhibit features ancient artifacts from various civilizations around the world.",
+  "He carefully examined the document, looking for any clues that might help solve the mystery.",
+  "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture.",
+  "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.",
+  "The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing mainly on some excellent dinner recipes from Spain.",
+  "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+  "The committee reviewed the proposal and provided many points of useful feedback to improve the project’s effectiveness.",
+  "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful completion, resulting in a product that exceeded everyone’s expectations."
+)
+
+
+#iterate through 10 sentences
+ten_p_value = c()
+for (i in 1:10) {
+  #chi-squared test statistic
+  test_statistic = calculate_chi_squared(ten_sentences[i], letter_frequencies)
+  #p-value
+  ten_p_value[i] = round(sum(chi_sq >= test_statistic)/length(chi_sq), 3)
+}
+```
+
+A simple example of watermarking, as seen in this problem, requires a large language model(LLM) to be programmed to use letters more frequently than usual. With statistical analysis, this frequency shift can be discovered. This problem presents 10 sentences, one created by a LLM with a watermark, and the goal is to figure out which one it is based on common letter frequencies in English. To start, we can create a null or reference distribution by comparing English sentences extracted from the Brown Corpus, compiled in 1960 at Brown University, and estimated letter frequencies in English sentences. This null distribution is of the chi-squared test statistic based on letter frequency. To check for a watermark, we calculate a p-value for each sentence's chi-squared value, comparing it with the null distribution, as seen below.
+
+```{=tex}
+\vspace{12pt}
+```
+
+\begin{center}
+P-Values for Each Sentence
+```{r echo=FALSE}
+#output table with p-values
+table_p_values = data.frame(
+  Sentence = paste("Sentence", 1:10),
+  P_Values = ten_p_value
+)
+
+kable(table_p_values, format = "latex", 
+      col.names = c("Sentence Number", "P-Values"))
+```
+\end{center}
+
+```{=tex}
+\vspace{12pt}
+```
+
+
+With the smallest p-value of 0.009, sentence 6 appears to be the sentence created by a LLM with a watermark. With this low of a p-value, the null hypothesis that this sentences the follows 'typical' English letter distribution is rejected. Just as a reference, the sentence contains, what appears to be, an unusual amount of uncommon letters.
+
+
+Sentence 6: Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.
+
+
