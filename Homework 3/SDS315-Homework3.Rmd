@@ -1,12 +1,12 @@
 ---
 title: "SDS 315 - Homework 3"
 author: "Amanda Roberts: acr4437"
-date: "January 25, 2024"
+date: "February 7, 2024"
 output:
   pdf_document: default
 ---
 
-link to GitHub:
+link to GitHub: https://github.com/amandarob8/SDS-315/tree/main/Homework%203
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
@@ -85,7 +85,7 @@ stocks_table = data.frame(
 )
 
 #AAPL
-model_AAPL = lm(SPY ~ AAPL, data=stocks)
+model_AAPL = lm(AAPL ~ SPY, data=stocks)
 
 stocks_table[1, ] = c("AAPL", 
                       round(coef(model_AAPL)[1], digits = 5), 
@@ -94,7 +94,7 @@ stocks_table[1, ] = c("AAPL",
                       )
 
 #GOOG
-model_GOOG = lm(SPY ~ GOOG, data=stocks)
+model_GOOG = lm(GOOG ~ SPY, data=stocks)
 
 stocks_table[2, ] = c("GOOG", 
                       round(coef(model_GOOG)[1], digits = 5), 
@@ -103,7 +103,7 @@ stocks_table[2, ] = c("GOOG",
                       )
 
 #MRK
-model_MRK = lm(SPY ~ MRK, data=stocks)
+model_MRK = lm(MRK ~ SPY, data=stocks)
 
 stocks_table[3, ] = c("MRK", 
                       round(coef(model_MRK)[1], digits = 5), 
@@ -112,7 +112,7 @@ stocks_table[3, ] = c("MRK",
                       )
 
 #JNJ
-model_JNJ = lm(SPY ~ JNJ, data=stocks)
+model_JNJ = lm(JNJ ~ SPY, data=stocks)
 
 stocks_table[4, ] = c("JNJ", 
                       round(coef(model_JNJ)[1], digits = 5), 
@@ -121,7 +121,7 @@ stocks_table[4, ] = c("JNJ",
                       )
 
 #WMT
-model_WMT = lm(SPY ~ WMT, data=stocks)
+model_WMT = lm(WMT ~ SPY, data=stocks)
 
 stocks_table[5, ] = c("WMT", 
                       round(coef(model_WMT)[1], digits = 5), 
@@ -130,7 +130,7 @@ stocks_table[5, ] = c("WMT",
                       )
 
 #TGT
-model_TGT = lm(SPY ~ TGT, data=stocks)
+model_TGT = lm(TGT ~ SPY, data=stocks)
 
 stocks_table[6, ] = c("TGT", 
                       round(coef(model_TGT)[1], digits = 5), 
@@ -182,7 +182,7 @@ lm_spain = lm(log(deaths) ~ days_since_first_death, data=spain)
 coef(lm_spain)[2]
 
 #doubling time
-70/coef(lm_spain)[2]
+70/(coef(lm_spain)[2] * 100)
 ```
 
 ```{r, include=FALSE}
@@ -196,14 +196,14 @@ lm_italy = lm(log(deaths) ~ days_since_first_death, data=italy)
 coef(lm_italy)[2]
 
 #doubling time
-70/coef(lm_italy)[2]
+70/(coef(lm_italy)[2] * 100)
 ```
 
 write about 
 -growth and doubling for italy and spain
 -caption for line graph
 
-COVID-19 deaths in Italy and Spain from February and March of 2020 fit an epxonential growth model. The time variable is the days since first death in the respective country. This data indicates that Italy's growth rate is about .183 or an 18.3% growth rate per day with a doubling time of about 382 days. Similarly, Spain's growth rate is about .276 or a 27.6% growth rate per day with a doubling time of about 253 days.
+COVID-19 deaths in Italy and Spain from February and March of 2020 fit an epxonential growth model. The time variable is the days since first death in the respective country. This data indicates that Italy's growth rate is about .183 or an 18.3% growth rate per day with a doubling time of about 3.82 days. Similarly, Spain's growth rate is about .276 or a 27.6% growth rate per day with a doubling time of about 2.53 days.
 
 ```{=tex}
 \vspace{12pt}
@@ -221,7 +221,7 @@ ggplot(covid) +
   scale_color_manual(values = c("Italy"="indianred", "Spain"="royalblue"))
 ```
 
-The graph above depicts the COVID-19 deaths by days since first death for Italy and Spain. Spain's growth rate of about 27.6%, greater than Italy's 18.3%, is clear with its steaper curve.
+The graph above depicts the COVID-19 deaths by days since first death for Italy and Spain. Spain's growth rate of about 27.6%, greater than Italy's 18.3%, is clear with its steeper curve.
 
 ```{=tex}
 \vspace{12pt}
@@ -253,12 +253,3 @@ log(Q) = log(K) + \beta * log(x)
 $$
 
 The equation is now a linear model with $\beta$ as the slope. After calculation, the estimated elasticity of demand for milk is about -1.62. 
-
-
-
-
-
-
-
-
-
