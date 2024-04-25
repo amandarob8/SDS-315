@@ -1,0 +1,141 @@
+---
+title: "SDS 315 - Homework 10"
+author: "Amanda Roberts: acr4437"
+date: "April 24, 2024"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+Github: https://github.com/amandarob8/SDS-315/tree/main/Homework%2010
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(moderndive)
+library(effectsize)
+library(kableExtra)
+```
+
+# Problem 1: Redlining
+```{r include=FALSE}
+redline = read.csv("redlining.csv")
+```
+
+
+## Question
+Is there an association between the number of FAIR policies and the racial/ethnic composition of a ZIP code, adjusting for the variables fire, age, and income?
+
+## Approach
+I used a multiple regression model to isolate the effect of the racial composition of a ZIP code from the fire, age, and income variables.
+
+
+## Results
+```{r echo=FALSE}
+lm_policies = lm(policies ~ minority + fire + age + income, data = redline)
+
+redline_table = get_regression_table(lm_policies, conf.level = 0.95, digits=4) %>%
+  select(term, estimate, p_value, lower_ci, upper_ci)
+
+kable(redline_table, format = "latex",
+      col.names = c("", "Estimate", "P-Value", "Lower CI", "Upper CI"))
+```
+
+## Conclusion
+The estimate of the coefficient for percentage of minorities in a ZIP code is about `0.008`. Since the number of policies for nearly all ZIP codes is less than 2, the small size of the coefficient is not ineffective. The positive sign of the coefficient and of the confidence interval indicates that the more minorities in a ZIP code, the more policies. Since the p-value for the minority vairable's estimate is the small size of `0.006`, the estimate is statistically significant meaning there is an association between the number of FAIR policies and the racial composition of a ZIP code. 
+
+
+\newpage
+
+# Problem 2: Grocery Store Prices
+```{r include=FALSE}
+grocery = read.csv("groceries.csv")
+```
+
+
+## Part A
+```{r echo=FALSE, fig.height=4}
+store_by_price = grocery %>% 
+  aggregate(Price ~ Store, FUN = mean)
+
+store_by_price$Store = reorder(store_by_price$Store, store_by_price$Price)
+
+ggplot(store_by_price) + 
+  geom_col(aes(x=Price, y=Store), fill="steelblue2", col="black") +
+  theme_bw() +
+  labs(title="Average Product Price",
+       x="Average Price of All Products",
+       y="Stores")
+```
+
+Graphed above is the average price of products at each of these stores. Whole Foods tops the chart with an average price of `$3.99` and Fiesta lands at the bottom with an average price of `$2.05`.
+
+
+## Part B
+```{r echo=FALSE, fig.height=6.5}
+product_which_stores = grocery %>% 
+  group_by(Product) %>%
+  summarize(Store = n())
+
+product_which_stores$Product = reorder(product_which_stores$Product, product_which_stores$Store)
+
+ggplot(product_which_stores) + 
+  geom_col(aes(x=Store, y=Product), fill="palegreen3", col="black") +
+  theme_bw() +
+  labs(title="Product Availability",
+       x="Number of Store the Product is Available at",
+       y="Stores")
+```
+
+Graphed above is the number of stores that each product is available at. A carton of eggs and Horizon 2% carton of milk are available at 16 stores, the most of any product. The products Lucky Charms, Frosted Flakes, Cinnamon Toast Crunch, and El Milagros Tortilla Chips have the lowest turnout at only 4 stores each.
+
+## Part C
+
+```{r include=FALSE}
+#Isolate effects of Type
+#Model for Price vs Product and Type
+lm_type = lm(Price ~ Product + Type, data = grocery)
+
+get_regression_table(lm_type, conf.level = 0.95, digits=2)
+```
+
+Compared with ordinary grocery stores, convenience stores charge somewhere between `$0.41` and `$0.92` more for the same product.
+\newpage
+
+## Part D
+
+```{r include=FALSE}
+#Isolate effects of Store
+#Model for Price vs Product and Store
+lm_store = lm(Price ~ Product + Store, data = grocery)
+
+get_regression_table(lm_store, conf.level = 0.95, digits=2)
+```
+
+Walmart and Kroger Fresh Fare seem to charge the lowest prices when comparing the same product. Wheatsville Food Co-Op and Whole Foods seem to charge the highest prices when comparing the same product.
+
+
+## Part E
+The coefficient estimate for Central Market is `-$0.57` and for HEB is `-$0.65`. While there is a difference between these coefficients, comparing this difference with the differences between other stores shows that this difference is not super significant. Thus, it is likely that Central Market charges a similar amount to HEB for the same product.
+
+
+## Part F
+```{r include=FALSE}
+grocery = grocery %>% 
+  mutate(Income10K = Income/10000)
+
+#Isolate effects of Income
+#Model for Price vs Product and Income10K
+lm_income = lm(Price ~ Product + Income10K, data = grocery)
+
+get_regression_table(lm_income, conf.level = 0.95, digits=2)
+
+standardize_parameters(lm_income)
+
+```
+
+Based on the negative sign of the Income10K coefficient, consumers in poorer ZIP codes seem to play more for the same product, on average. When income is higher, the price of products are decreased by a higher amount. A one standard deviation increase in the income of a ZIP code seems to be associated with a -0.03 standard deviation change in the price that consumers in that ZIP code expect to pay for the same product.
